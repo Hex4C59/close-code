@@ -14,7 +14,7 @@ import { findBuddyTriggerPositions, useBuddyNotification } from '../../buddy/use
 import { FastModePicker } from '../../commands/fast/fast.js';
 import { isUltrareviewEnabled } from '../../commands/review/ultrareviewEnabled.js';
 import { getNativeCSIuTerminalDisplayName } from '../../commands/terminalSetup/terminalSetup.js';
-import { type Command, hasCommand } from '../../commands.js';
+import { type Command, getCommandName, hasCommand, isCommandEnabled } from '../../commands.js';
 import { useIsModalOverlayActive } from '../../context/overlayContext.js';
 import { useSetPromptOverlayDialog } from '../../context/promptOverlayContext.js';
 import { formatImageRef, formatPastedTextRef, getPastedTextRefNumLines, parseReferences } from '../../history.js';
@@ -1065,7 +1065,16 @@ function PromptInput({
     // PromptInput UX: Check if suggestions dropdown is showing
     // For directory suggestions, allow submission (Tab is used for completion)
     const hasDirectorySuggestions = suggestionsState.suggestions.length > 0 && suggestionsState.suggestions.every(s => s.description === 'directory');
-    if (suggestionsState.suggestions.length > 0 && !isSubmittingSlashCommand && !hasDirectorySuggestions) {
+    const slashCommandName = inputParam.startsWith('/') && !inputParam.includes(' ') ? inputParam.slice(1) : undefined;
+    const isCompleteImmediateCommand = slashCommandName !== undefined && commands.some(cmd => isCommandEnabled(cmd) && cmd.immediate && (getCommandName(cmd) === slashCommandName || cmd.name === slashCommandName || cmd.aliases?.includes(slashCommandName)));
+    if (isCompleteImmediateCommand) {
+      setSuggestionsState({
+        suggestions: [],
+        selectedSuggestion: -1,
+        commandArgumentHint: undefined
+      });
+    }
+    if (suggestionsState.suggestions.length > 0 && !isSubmittingSlashCommand && !hasDirectorySuggestions && !isCompleteImmediateCommand) {
       logForDebugging(`[onSubmit] early return: suggestions showing (count=${suggestionsState.suggestions.length})`);
       return; // Don't submit, user needs to clear suggestions first
     }
@@ -1096,7 +1105,7 @@ function PromptInput({
       clearBuffer,
       resetHistory
     });
-  }, [promptSuggestionState, speculation, speculationSessionTimeSavedMs, teamContext, store, footerItems, suggestionsState.suggestions, onSubmitProp, onAgentSubmit, clearBuffer, resetHistory, logOutcomeAtSubmission, setAppState, markAccepted, pastedContents, removeNotification]);
+  }, [promptSuggestionState, speculation, speculationSessionTimeSavedMs, teamContext, store, footerItems, suggestionsState.suggestions, onSubmitProp, onAgentSubmit, clearBuffer, resetHistory, logOutcomeAtSubmission, setAppState, markAccepted, pastedContents, removeNotification, commands, setSuggestionsState]);
   const {
     suggestions,
     selectedSuggestion,

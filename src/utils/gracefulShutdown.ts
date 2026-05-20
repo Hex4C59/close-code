@@ -14,6 +14,7 @@ import instances from '../ink/instances.js'
 import {
   DISABLE_KITTY_KEYBOARD,
   DISABLE_MODIFY_OTHER_KEYS,
+  eraseToEndOfScreen,
 } from '../ink/termio/csi.js'
 import {
   DBP,
@@ -92,6 +93,11 @@ function cleanupTerminalModes(): void {
         // so printResumeHint still hits the main buffer.
         writeSync(1, EXIT_ALT_SCREEN)
       }
+    } else if (inst) {
+      // Main-screen Ink leaves the transcript in scrollback, but transient
+      // prompt UI (slash suggestions, footer hints) can sit below the cursor.
+      // Clear from the current prompt line down before returning to the shell.
+      writeSync(1, `\r${eraseToEndOfScreen()}`)
     }
     // Catches events that arrived during the unmount tree-walk.
     // detachForShutdown() below also drains.
