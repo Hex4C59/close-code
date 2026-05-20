@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * build.mjs — Build Claude Code from source using esbuild
+ * transform.mjs — Build Close Code from source using esbuild
  *
  * Strategy:
  *   1. Copy src/ → build-src/ (working copy)
@@ -17,7 +17,12 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 
-const VERSION = '0.0.1'
+const PACKAGE_JSON = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'))
+const VERSION = PACKAGE_JSON.version ?? '0.0.0'
+const PACKAGE_NAME = PACKAGE_JSON.name ?? 'close-code'
+const ISSUES_URL =
+  PACKAGE_JSON.bugs?.url ?? 'https://github.com/Hex4C59/close-code/issues'
+const NEW_ISSUE_URL = `${ISSUES_URL}/new/choose`
 
 // ── Step 1: Clean & Create build directory ─────────────────────────────────
 
@@ -76,12 +81,12 @@ await writeFile(ENTRY, `
 const MACRO = {
   VERSION: '${VERSION}',
   BUILD_TIME: '',
-  FEEDBACK_CHANNEL: 'https://github.com/anthropics/claude-code/issues',
-  ISSUES_EXPLAINER: 'https://github.com/anthropics/claude-code/issues/new/choose',
-  FEEDBACK_CHANNEL_URL: 'https://github.com/anthropics/claude-code/issues',
-  ISSUES_EXPLAINER_URL: 'https://github.com/anthropics/claude-code/issues/new/choose',
-  NATIVE_PACKAGE_URL: '@anthropic-ai/claude-code',
-  PACKAGE_URL: '@anthropic-ai/claude-code',
+  FEEDBACK_CHANNEL: '${ISSUES_URL}',
+  ISSUES_EXPLAINER: '${NEW_ISSUE_URL}',
+  FEEDBACK_CHANNEL_URL: '${ISSUES_URL}',
+  ISSUES_EXPLAINER_URL: '${NEW_ISSUE_URL}',
+  NATIVE_PACKAGE_URL: '${PACKAGE_NAME}',
+  PACKAGE_URL: '${PACKAGE_NAME}',
   VERSION_CHANGELOG: '',
 }
 

@@ -16,7 +16,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const SRC = path.join(ROOT, 'src')
 
-const VERSION = '0.0.1'
+const PACKAGE_JSON = JSON.parse(
+  fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'),
+)
+const VERSION = PACKAGE_JSON.version ?? '0.0.0'
+const PACKAGE_NAME = PACKAGE_JSON.name ?? 'close-code'
+const ISSUES_URL =
+  PACKAGE_JSON.bugs?.url ?? 'https://github.com/Hex4C59/close-code/issues'
+const NEW_ISSUE_URL = `${ISSUES_URL}/new/choose`
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -60,10 +67,10 @@ function patchFile(filePath) {
   const macroReplacements = {
     'MACRO.VERSION': `'${VERSION}'`,
     'MACRO.BUILD_TIME': `'${new Date().toISOString()}'`,
-    'MACRO.FEEDBACK_CHANNEL': `'https://github.com/anthropics/claude-code/issues'`,
-    'MACRO.ISSUES_EXPLAINER': `'https://github.com/anthropics/claude-code/issues/new/choose'`,
-    'MACRO.NATIVE_PACKAGE_URL': `'@anthropic-ai/claude-code'`,
-    'MACRO.PACKAGE_URL': `'@anthropic-ai/claude-code'`,
+    'MACRO.FEEDBACK_CHANNEL': `'${ISSUES_URL}'`,
+    'MACRO.ISSUES_EXPLAINER': `'${NEW_ISSUE_URL}'`,
+    'MACRO.NATIVE_PACKAGE_URL': `'${PACKAGE_NAME}'`,
+    'MACRO.PACKAGE_URL': `'${PACKAGE_NAME}'`,
     'MACRO.VERSION_CHANGELOG': `''`,
   }
 

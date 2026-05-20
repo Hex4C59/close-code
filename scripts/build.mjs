@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * build.mjs — Best-effort build of Claude Code v0.0.1 from source
+ * build.mjs — Best-effort build of Close Code from source
  *
  * ⚠️  IMPORTANT: A complete rebuild requires the Bun runtime's compile-time
  *     intrinsics (feature(), MACRO, bun:bundle). This script provides a
@@ -25,7 +25,12 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
-const VERSION = '0.0.1'
+const PACKAGE_JSON = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'))
+const VERSION = PACKAGE_JSON.version ?? '0.0.0'
+const PACKAGE_NAME = PACKAGE_JSON.name ?? 'close-code'
+const ISSUES_URL =
+  PACKAGE_JSON.bugs?.url ?? 'https://github.com/Hex4C59/close-code/issues'
+const NEW_ISSUE_URL = `${ISSUES_URL}/new/choose`
 const BUILD = join(ROOT, 'build-src')
 const ENTRY = join(BUILD, 'entry.ts')
 const ESBUILD_BIN = join(ROOT, 'node_modules', '.bin', process.platform === 'win32' ? 'esbuild.cmd' : 'esbuild')
@@ -84,12 +89,12 @@ let transformCount = 0
 const MACROS = {
   'MACRO.VERSION': `'${VERSION}'`,
   'MACRO.BUILD_TIME': `''`,
-  'MACRO.FEEDBACK_CHANNEL': `'https://github.com/anthropics/claude-code/issues'`,
-  'MACRO.ISSUES_EXPLAINER': `'https://github.com/anthropics/claude-code/issues/new/choose'`,
-  'MACRO.FEEDBACK_CHANNEL_URL': `'https://github.com/anthropics/claude-code/issues'`,
-  'MACRO.ISSUES_EXPLAINER_URL': `'https://github.com/anthropics/claude-code/issues/new/choose'`,
-  'MACRO.NATIVE_PACKAGE_URL': `'@anthropic-ai/claude-code'`,
-  'MACRO.PACKAGE_URL': `'@anthropic-ai/claude-code'`,
+  'MACRO.FEEDBACK_CHANNEL': `'${ISSUES_URL}'`,
+  'MACRO.ISSUES_EXPLAINER': `'${NEW_ISSUE_URL}'`,
+  'MACRO.FEEDBACK_CHANNEL_URL': `'${ISSUES_URL}'`,
+  'MACRO.ISSUES_EXPLAINER_URL': `'${NEW_ISSUE_URL}'`,
+  'MACRO.NATIVE_PACKAGE_URL': `'${PACKAGE_NAME}'`,
+  'MACRO.PACKAGE_URL': `'${PACKAGE_NAME}'`,
   'MACRO.VERSION_CHANGELOG': `''`,
 }
 
@@ -138,8 +143,7 @@ console.log(`✅ Phase 2: Transformed ${transformCount} files`)
 // PHASE 3: Create entry wrapper
 // ══════════════════════════════════════════════════════════════════════════════
 
-await writeFile(ENTRY, `// Claude Code v${VERSION} — built from source
-// Copyright (c) Anthropic PBC. All rights reserved.
+await writeFile(ENTRY, `// Close Code v${VERSION} - built from source
 import './src/entrypoints/cli.tsx'
 `, 'utf8')
 console.log('✅ Phase 3: Created entry wrapper')
@@ -170,7 +174,8 @@ for (let round = 1; round <= MAX_ROUNDS; round++) {
       '--target=node18',
       '--format=esm',
       `--outfile=${OUT_FILE}`,
-      `--banner:js=#!/usr/bin/env node\n// Claude Code v${VERSION} (built from source)\n// Copyright (c) Anthropic PBC. All rights reserved.\n`,
+      `--banner:js=#!/usr/bin/env node\n// Close Code v${VERSION} (built from source)\n`,
+      `--define:process.env.CLAUDE_CODE_VERSION="${VERSION}"`,
       `--alias:src=${join(BUILD, 'src')}`,
       `--alias:@ant/claude-for-chrome-mcp=${join(ROOT, 'stubs', 'claude-for-chrome-mcp.ts')}`,
       `--alias:color-diff-napi=${join(BUILD, 'src', 'native-ts', 'color-diff', 'index.ts')}`,
